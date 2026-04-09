@@ -1,0 +1,41 @@
+import pandas as pd
+
+# Defining and concatenating sold data from January to most recent month
+sold1 = pd.read_csv('MONTH1DATA')
+sold2 = pd.read_csv('MONTH2DATA')
+sold3 = pd.read_csv('MONTH3DATA')
+
+# Row counts before concatenation
+print(sold1.shape[0])
+print(sold2.shape[0])
+print(sold3.shape[0])
+sold = pd.concat([sold1, sold2, sold3])
+print(sold.shape[0])
+# Row counts: sold1: 17976, sold2: 19925, sold3: 23276, total: 61177
+
+# Doing the same concat and read_csv for listings
+listings1 = pd.read_csv('MONTH1DATA')
+listings2 = pd.read_csv('MONTH2DATA')
+listings3 = pd.read_csv('MONTH3DATA')
+
+# Row counts before concatenation
+print(listings1.shape[0])
+print(listings2.shape[0])
+print(listings3.shape[0])
+listings = pd.concat([listings1, listings2, listings3])
+print(listings.shape[0])
+# Row counts: listings1: 27454, listings2: 27447, listings3: 32282, total: 87183
+
+# Filtering for only residential properties
+sold = sold[sold.PropertyType == 'Residential']
+listings = listings[listings.PropertyType == 'Residential']  
+
+print(sold.shape[0])
+print(listings.shape[0])
+# Post filtering: sold: 40050, listings: 54998
+
+# Export as CSVs 
+df = pd.DataFrame(sold)
+df2 = pd.DataFrame(listings)
+df.to_csv('sold_data.csv', index=False)
+df2.to_csv('listings_data.csv', index=False)
