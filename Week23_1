@@ -1,0 +1,47 @@
+import pandas as pd
+
+# From previous week code 
+sold1 = pd.read_csv('SOLDMONTH1')
+sold2 = pd.read_csv('SOLDMONTH2')
+sold3 = pd.read_csv('SOLDMONTH3')
+sold = pd.concat([sold1, sold2, sold3])
+sold = sold[sold.PropertyType == 'Residential']
+
+# Doing the same concat and read_csv for listings
+listings1 = pd.read_csv('LISTMONTH1')
+listings2 = pd.read_csv('LISTMONTH2')
+listings3 = pd.read_csv('LISTMONTH3')
+listings = pd.concat([listings1, listings2, listings3])
+listings = listings[listings.PropertyType == 'Residential']
+
+# Fetch the mortgage rate data from FRED
+url = "FREDURL"
+# Wasnt able to get the data directly from the URL, so I downloaded it and read it from a local file
+mortgage = pd.read_csv('MORTGAGEFILE', parse_dates=['observation_date'])
+mortgage.columns = ['date', 'rate_30yr_fixed']
+
+# Resample weekly rates to monthly averages
+mortgage['year_month'] = mortgage['date'].dt.to_period('M')
+mortgage_monthly = (
+mortgage.groupby('year_month')['rate_30yr_fixed']
+.mean().reset_index()
+)
+
+sold['year_month'] = pd.to_datetime(sold['CloseDate']).dt.to_period('M')
+listings['year_month'] = pd.to_datetime(listings['ListingContractDate']).dt.to_period('M')
+
+sold_with_rates = sold.merge(mortgage_monthly, on='year_month', how='left')
+listings_with_rates = listings.merge(mortgage_monthly, on='year_month', how='left')
+print(sold_with_rates['rate_30yr_fixed'].isnull().sum())
+print(listings_with_rates['rate_30yr_fixed'].isnull().sum())
+# These values should be zero if we filter out all nulls
+
+print(sold_with_rates[['CloseDate', 'year_month', 'ClosePrice',
+'rate_30yr_fixed']].head())
+
+frame = pd.DataFrame(sold_with_rates)
+frame2 = pd.DataFrame(listings_with_rates)  
+
+# Export to CSV
+frame.to_csv('sold_obs.csv', index=False)
+frame2.to_csv('listings_obs.csv', index=False)
