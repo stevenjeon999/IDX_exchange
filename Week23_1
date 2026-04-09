@@ -1,0 +1,27 @@
+import pandas as pd
+
+# Loading data and exaimining columns and unique values
+sold = pd.read_csv('SOLDDATAFILE')  
+sold['PropertyType'].unique()
+print(sold.columns)
+
+print(sold.shape[0])
+# 40050 rows
+
+nulls_per_column = sold.isnull().sum()
+print(nulls_per_column)
+
+# The 90% threshhold for 40050 rows is 36045 non-null values. So we can drop any column with less than 36045 non-null values
+sold_data_clean = sold.dropna(axis=1, thresh=36045) 
+
+# Numeric distribution summary for variables of interest 
+summary1 = sold_data_clean['ClosePrice'].describe(percentiles=[.25, .5, .75])
+summary1 = sold_data_clean['ClosePrice'].describe(percentiles=[.25, .5, .75])
+print(summary1)
+summary2 = sold_data_clean['LivingArea'].describe(percentiles=[.25, .5, .75])
+print(summary2)
+summary3 = sold_data_clean['DaysOnMarket'].describe(percentiles=[.25, .5, .75])
+print(summary3)
+
+# Saving new filtered data as CSV
+sold_data_clean.to_csv('sold_data_clean.csv', index=False)
