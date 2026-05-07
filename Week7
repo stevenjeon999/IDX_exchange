@@ -1,0 +1,51 @@
+import os
+os.chdir('/Users/stevenjeon/Downloads/IDX')
+import pandas as pd
+
+df = pd.read_csv('sold_data_varsgen.csv')
+
+# Creating and testing IQR outliers for variables of interest
+Q1 = df['ClosePrice'].quantile(0.25)
+Q3 = df['ClosePrice'].quantile(0.75)
+IQR = Q3 - Q1
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+df['isnotoutlierclose'] = (df['ClosePrice'] >= lower) & (df['ClosePrice'] <= upper)
+
+Q1_2 = df['LivingArea'].quantile(0.25)
+Q3_2 = df['LivingArea'].quantile(0.75)
+IQR2 = Q3_2 - Q1_2
+lower2 = Q1_2 - 1.5 * IQR2
+upper2 = Q3_2 + 1.5 * IQR2
+df['isnotoutlierliving'] = (df['LivingArea'] >= lower2) & (df['LivingArea'] <= upper2)
+
+Q1_3 = df['DaysOnMarket'].quantile(0.25)
+Q3_3 = df['DaysOnMarket'].quantile(0.75)
+IQR_3 = Q3_3 - Q1_3
+lower3 = Q1_3 - 1.5 * IQR_3
+upper3 = Q3_3 + 1.5 * IQR_3
+df['isnotoutlierdays'] = (df['DaysOnMarket'] >= lower3) & (df['DaysOnMarket'] <= upper3)
+
+# Exporting as CSV
+df.to_csv('sold_obs_outliersflagged.csv', index=False)
+# Counting rows and median values for flagged df
+print(len(df))
+print(df['ClosePrice'].median())
+print(df['LivingArea'].median())
+print(df['DaysOnMarket'].median())
+
+# Outright filtering out outlier observations and saving as own dataset
+df = df[(df['isnotoutlierclose'] == True) & (df['isnotoutlierliving'] == True) & (df['isnotoutlierdays'] == True)]
+
+print(len(df))
+print(df['ClosePrice'].median())
+print(df['LivingArea'].median())
+print(df['DaysOnMarket'].median())
+
+df.to_csv('sold_obs_outliersdropped.csv', index=False)
+
+# Before filtering: 
+# 48481 observations, median ClosePrice 510000.0 median living area 1567.0 median daysonmarket 24.0
+
+# After filtering: 
+# 39147 observations, median closeprice 505000.0 median living area 1506.0 median daysonmarket 20.0
