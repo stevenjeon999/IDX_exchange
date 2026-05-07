@@ -1,0 +1,30 @@
+import os
+os.chdir('WORKING DIRECTORY')
+import pandas as pd
+cleanedf = pd.read_csv('CLEANED DATA')
+
+# Creating relevant new interaction variables
+cleanedf['PriceRatio'] = cleanedf["ClosePrice"] / cleanedf["OriginalListPrice"]
+cleanedf['PricePSqFt'] = cleanedf["ClosePrice"] / cleanedf['LivingArea']
+cleanedf['DaysOnMarket'] = cleanedf['DaysOnMarket'].astype(int)
+
+cleanedf['CloseDate'] = pd.to_datetime(cleanedf['CloseDate'])
+cleanedf['CloseYear']  = cleanedf['CloseDate'].dt.year
+cleanedf['CloseMonth'] = cleanedf['CloseDate'].dt.month
+cleanedf['CloseDay']   = cleanedf['CloseDate'].dt.day
+
+cleanedf['ListingContractDate'] = pd.to_datetime(cleanedf['ListingContractDate'])
+cleanedf['PurchaseContractDate'] = pd.to_datetime(cleanedf['PurchaseContractDate'])
+
+cleanedf['Close2OriginalP'] = (cleanedf['ClosePrice'] / cleanedf['OriginalListPrice'])
+cleanedf['Listing2Contract'] = (cleanedf['PurchaseContractDate'] - cleanedf['ListingContractDate']).dt.days
+cleanedf['Contract2Close'] = (cleanedf['CloseDate'] - cleanedf['PurchaseContractDate']).dt.days
+
+# Looking at summary statistics for category vars
+print(cleanedf['PropertyType'].value_counts())
+print(cleanedf['PropertySubType'].value_counts())
+
+# Looking at a numeric variable grouped by a categorical one (ex: average days on market by property type)
+print(cleanedf.groupby('PropertyType')['DaysOnMarket'].mean())
+
+cleanedf.to_csv('sold_data_varsgen.csv', index=False)
