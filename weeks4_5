@@ -1,0 +1,60 @@
+import os
+os.chdir('[WORKINGDIRECTORY]')
+import pandas as pd
+
+sold_obs = pd.read_csv('[SOLDOBSERVATIONSFILE]')  
+# Counting rows before
+print(len(sold_obs))
+
+# Convert datefields to datetime
+sold_obs['CloseDate'] = pd.to_datetime(sold_obs['CloseDate'])
+sold_obs['PurchaseContractDate'] = pd.to_datetime(sold_obs['PurchaseContractDate'])
+sold_obs['ListingContractDate'] = pd.to_datetime(sold_obs['ListingContractDate'])
+sold_obs['ContractStatusChangeDate'] = pd.to_datetime(sold_obs['ContractStatusChangeDate'])
+
+# Data type confirmations: 
+print(sold_obs.CloseDate)
+print(sold_obs.PurchaseContractDate)
+print(sold_obs.ListingContractDate)
+print(sold_obs.ContractStatusChangeDate)
+
+# Flagging invalid numeric values
+sold_obs['listing_after_close_flag'] = sold_obs['ListingContractDate'] > sold_obs['PurchaseContractDate']
+sold_obs['purchase_after_close_flag'] = sold_obs['PurchaseContractDate'] > sold_obs['CloseDate']
+sold_obs['oddities_flag'] = ((sold_obs['ClosePrice'] < 0) | (sold_obs['LivingArea'] < 0) | (sold_obs['DaysOnMarket'] < 0))
+
+sold_obs['listings_flags'] = sold_obs['Latitude'].isnull() | sold_obs['Longitude'].isnull() | (sold_obs['Latitude'] == 0) | (sold_obs['Longitude'] == 0)
+
+# Viewing & removing outlier observations (rows w/ > 20% NAs)
+sold_obs.isnull().sum()
+sold_obs = sold_obs.dropna(axis=1, thresh=int(len(sold_obs) * 0.8))
+
+# Removing earlier flagged observations
+sold_obs = sold_obs.loc[~sold_obs['listing_after_close_flag'], :]
+sold_obs = sold_obs.loc[~sold_obs['purchase_after_close_flag'], :]
+sold_obs = sold_obs.loc[~sold_obs['oddities_flag'], :]
+sold_obs = sold_obs.loc[~sold_obs['listings_flags'], :]
+
+# Deleting irrelevant columns and test dummies to get final dataset
+sold_obs = sold_obs.drop(columns=['listings_flags', 'oddities_flag', 'purchase_after_close_flag', 'listing_after_close_flag'])
+# Removing flagged observations
+sold_obs = sold_obs.drop(columns=['PoolPrivateYN', 'ListAgentEmail', 'ListAgentFirstName', 'ListAgentLastName', 'UnparsedAddress', 'LivingArea'])
+# Removing irrelevant info such as number of pools and agent info
+sold_obs = sold_obs.drop(columns=['ListOfficeName', 'BuyerOfficeName', 'MLSAreaMajor', 'ParkingTotal', 'PropertySubType', 'BathroomsTotalInteger', 'BedroomsTotal'])
+# Removing More agent/customer info and bathroom/bedroom info, which I will not be looking at for my analysis
+sold_obs = sold_obs.drop(columns=['GarageSpaces', 'NewConstructionYN', 'Levels', 'FireplaceYN', 'StreetNumberNumeric', 'BuyerOfficeAOR'])
+# Removing more irrelevant dummy vars and nonnumeric charactersitcs
+sold_obs = sold_obs.drop(columns=['ListAgentFullName', 'BuyerAgentMlsId', 'BuyerAgentFirstName', 'BuyerAgentLastName'])
+# More nonnumeric buyer/seller info that wont be measured
+sold_obs = sold_obs.drop(columns=['MlsStatus', 'StateOrProvince'])
+# All listings are from CA and sold
+sold_obs = sold_obs.drop(columns=['ListingKey', 'ListingKeyNumeric', 'ListingId', 'PostalCode'])
+# Not measured
+
+df = pd.DataFrame(sold_obs)
+
+# Counting observations post filtering
+print(len(df))
+
+# Export to CSV
+df.to_csv('[CLEANEDDATASET]', index=False)
