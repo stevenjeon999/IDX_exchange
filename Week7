@@ -1,8 +1,8 @@
 import os
-os.chdir('/Users/stevenjeon/Downloads/IDX')
+os.chdir('WORKING DIRECTORY')
 import pandas as pd
 
-df = pd.read_csv('sold_data_varsgen.csv')
+df = pd.read_csv('VARIABLE GENERATED DF')
 
 # Creating and testing IQR outliers for variables of interest
 Q1 = df['ClosePrice'].quantile(0.25)
